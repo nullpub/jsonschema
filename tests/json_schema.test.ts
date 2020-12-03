@@ -1,7 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.79.0/testing/asserts.ts";
 import * as S from "https://deno.land/x/hkts@v0.0.41/schemable.ts";
 
-import * as J from "../json_schema.ts";
+import * as J from "../jsonschema.ts";
 
 Deno.test({
   name: "JsonSchema nullable",
