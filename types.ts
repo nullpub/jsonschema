@@ -1,10 +1,12 @@
-import type { Literal } from "https://deno.land/x/hkts@v0.0.41/schemable.ts";
+import type { Literal } from "https://deno.land/x/hkts@v0.0.48/schemable/schemable.ts";
 
 /***************************************************************************************************
  * @section  Types
  **************************************************************************************************/
 
 type NonEmptyArray<T> = readonly [T, ...T[]];
+
+export type Unknown = {};
 
 export type Boolean = { type: "boolean" };
 
@@ -47,16 +49,19 @@ export type Array = {
   additionalItems?: Type;
 };
 
-export type Type = { definitions?: Definitions } & (
-  | String
-  | Number
-  | Object
-  | Array
-  | Boolean
-  | Null
-  | Enum
-  | AllOf
-  | AnyOf
-  | OneOf
-  | Ref
-);
+export type Type =
+  & { definitions?: Definitions }
+  & (
+    | Unknown
+    | String
+    | Number
+    | Object
+    | Array
+    | Boolean
+    | Null
+    | Enum
+    | AllOf
+    | AnyOf
+    | OneOf
+    | Ref
+  );

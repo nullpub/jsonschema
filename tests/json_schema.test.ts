@@ -1,5 +1,4 @@
 import { assertEquals } from "https://deno.land/std@0.79.0/testing/asserts.ts";
-import * as S from "https://deno.land/x/hkts@v0.0.41/schemable.ts";
 
 import * as J from "../jsonschema.ts";
 
@@ -76,7 +75,7 @@ Deno.test({
     const actual = J.print(
       J.type({
         foo: J.string,
-      })
+      }),
     );
     const expected = {
       definitions: {},
@@ -98,7 +97,7 @@ Deno.test({
     const actual = J.print(
       J.partial({
         foo: J.string,
-      })
+      }),
     );
     const expected = {
       definitions: {},
@@ -168,7 +167,7 @@ Deno.test({
   name: "JsonSchema union",
   fn() {
     const actual = J.print(
-      J.union(J.type({ foo: J.string }), J.type({ bar: J.number }))
+      J.union(J.type({ foo: J.string }), J.type({ bar: J.number })),
     );
     const expected = {
       anyOf: [
@@ -201,7 +200,7 @@ Deno.test({
   name: "JsonSchema intersect",
   fn() {
     const actual = J.print(
-      J.intersect(J.type({ foo: J.string }), J.type({ bar: J.number }))
+      J.intersect(J.type({ foo: J.string }), J.type({ bar: J.number })),
     );
     const expected = {
       allOf: [
@@ -237,7 +236,7 @@ Deno.test({
       J.sum("tag", {
         Some: J.type({ tag: J.literal("Some"), value: J.string }),
         None: J.type({ tag: J.literal("None") }),
-      })
+      }),
     );
     const expected = {
       definitions: {},
@@ -285,8 +284,7 @@ Deno.test({
         age: J.number,
         isAlive: J.boolean,
         friends: J.array(Person),
-      })
-    );
+      }));
 
     const actual = J.print(Person);
     const expected = {
@@ -323,14 +321,12 @@ Deno.test({
     const Foo: J.JsonSchema<Foo> = J.lazy("Foo", () =>
       J.partial({
         bar: Bar,
-      })
-    );
+      }));
 
     const Bar: J.JsonSchema<Bar> = J.lazy("Bar", () =>
       J.partial({
         bar: Foo,
-      })
-    );
+      }));
 
     const actual = J.print(Foo);
     const expected = {
