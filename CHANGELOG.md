@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/nullpub/jsonschema/compare/v1.2.0...v1.3.0) (2021-01-31)
+
+
+### Features
+
+* export Semigroup concat for Json.Definitions ([639289f](https://github.com/nullpub/jsonschema/commit/639289ffbbdc64e28959edcfa6eeb8d946bc938f))
+
 ## [1.2.0](https://github.com/nullpub/jsonschema/compare/v1.1.2...v1.2.0) (2021-01-31)
 
 
