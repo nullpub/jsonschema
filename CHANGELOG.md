@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/nullpub/jsonschema/compare/v1.1.2...v1.2.0) (2021-01-31)
+
+
+### Features
+
+* upgrade hkts deps and resolve conflicts ([6cd6361](https://github.com/nullpub/jsonschema/commit/6cd6361d5781867fbd5870eb17ed0d9b385f4ae8))
+
 ### [1.1.2](https://github.com/nullpub/jsonschema/compare/v1.1.1...v1.1.2) (2020-12-03)
 
 ### [1.1.1](https://github.com/nullpub/jsonschema/compare/v1.1.0...v1.1.1) (2020-12-03)
