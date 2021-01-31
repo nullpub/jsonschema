@@ -25,7 +25,7 @@ type NonEmptyArray<T> = readonly [T, ...T[]];
  * @section Utilities
  **************************************************************************************************/
 
-const { concat }: TC.Semigroup<Json.Definitions> = {
+export const { concat }: TC.Semigroup<Json.Definitions> = {
   concat: (a, b) => Object.assign({}, a, b),
 };
 
@@ -41,14 +41,14 @@ const createJsonString = (props?: Omit<Json.String, "type">): Json.String => ({
 });
 
 const createJsonNumber = (
-  props: Omit<Json.Number, "type"> = {},
+  props: Omit<Json.Number, "type"> = {}
 ): Json.Number => ({
   ...props,
   type: "number",
 });
 
 const createJsonInteger = (
-  props: Omit<Json.Number, "type"> = {},
+  props: Omit<Json.Number, "type"> = {}
 ): Json.Number => ({
   ...props,
   type: "integer",
@@ -65,7 +65,7 @@ const createJsonArray = (props: Omit<Json.Array, "type">): Json.Array => ({
 });
 
 const createJsonBoolean = (
-  props: Omit<Json.Boolean, "type"> = {},
+  props: Omit<Json.Boolean, "type"> = {}
 ): Json.Boolean => ({ ...props, type: "boolean" });
 
 const createJsonNull = (props: Omit<Json.Null, "type"> = {}): Json.Null => ({
@@ -100,7 +100,7 @@ const createJsonRef = (id: string): Json.Ref => ({
 export const nullable = <A>(or: JsonSchema<A>): JsonSchema<null | A> =>
   pipe(
     or,
-    S.map((a) => createJsonAnyOf([createJsonNull(), a])),
+    S.map((a) => createJsonAnyOf([createJsonNull(), a]))
   );
 
 /***************************************************************************************************
@@ -120,7 +120,7 @@ export const number: JsonSchema<number> = S.of(createJsonNumber());
 export const boolean: JsonSchema<boolean> = S.of(createJsonBoolean());
 
 export const type = <P extends Record<string, JsonSchema<unknown>>>(
-  properties: NonEmptyRecord<P>,
+  properties: NonEmptyRecord<P>
 ): JsonSchema<{ [K in keyof P]: TypeOf<P[K]> }> =>
   pipe(
     S.sequenceStruct(properties as Record<string, JsonSchema<P[keyof P]>>),
@@ -129,31 +129,31 @@ export const type = <P extends Record<string, JsonSchema<unknown>>>(
         properties,
         required: (Object.keys(properties) as unknown) as NonEmptyArray<string>,
       })
-    ),
+    )
   );
 
 export const partial = <P extends Record<string, JsonSchema<unknown>>>(
-  properties: P,
+  properties: P
 ): JsonSchema<Partial<{ [K in keyof P]: TypeOf<P[K]> }>> =>
   pipe(
     S.sequenceStruct(properties as Record<string, JsonSchema<P[keyof P]>>),
-    S.map((properties) => createJsonObject({ properties })),
+    S.map((properties) => createJsonObject({ properties }))
   );
 
 export const array = <A>(item: JsonSchema<A>): JsonSchema<readonly A[]> =>
   pipe(
     item,
-    S.map((items) => createJsonArray({ items })),
+    S.map((items) => createJsonArray({ items }))
   );
 
 export const record = <A>(
-  schema: JsonSchema<A>,
+  schema: JsonSchema<A>
 ): JsonSchema<Record<string, A>> =>
   pipe(
     schema,
     S.map((aps) =>
       createJsonObject({ properties: {}, additionalProperties: aps })
-    ),
+    )
   );
 
 export const tuple = <A extends NonEmptyArray<unknown>>(
@@ -161,7 +161,7 @@ export const tuple = <A extends NonEmptyArray<unknown>>(
 ): JsonSchema<A> =>
   pipe(
     S.sequenceTuple(...(components as NonEmptyArray<JsonSchema<keyof A>>)),
-    S.map((items) => createJsonArray({ items })),
+    S.map((items) => createJsonArray({ items }))
   );
 
 export const union = <MS extends NonEmptyArray<JsonSchema<unknown>>>(
@@ -169,27 +169,27 @@ export const union = <MS extends NonEmptyArray<JsonSchema<unknown>>>(
 ): JsonSchema<TypeOf<MS[keyof MS]>> =>
   pipe(
     S.sequenceTuple(...(members as NonEmptyArray<JsonSchema<MS[keyof MS]>>)),
-    S.map((items) => createJsonAnyOf(items)),
+    S.map((items) => createJsonAnyOf(items))
   );
 
 export const intersect = <A, B>(
   left: JsonSchema<A>,
-  right: JsonSchema<B>,
+  right: JsonSchema<B>
 ): JsonSchema<A & B> =>
   pipe(
     S.sequenceTuple(left, right),
-    S.map((items) => createJsonAllOf(items)),
+    S.map((items) => createJsonAllOf(items))
   );
 
 export const sum = <T extends string, A>(
   tag: T,
-  members: { [K in keyof A]: JsonSchema<A[K] & { [K in T]: string }> },
+  members: { [K in keyof A]: JsonSchema<A[K] & { [K in T]: string }> }
 ): JsonSchema<A[keyof A]> =>
   pipe(
     S.sequenceStruct(members as Record<string, JsonSchema<A[keyof A]>>),
     S.map((r) =>
       createJsonOneOf((Object.values(r) as unknown) as NonEmptyArray<Json.Type>)
-    ),
+    )
   );
 
 export const lazy = <A>(id: string, f: () => JsonSchema<A>): JsonSchema<A> => {
