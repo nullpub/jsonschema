@@ -63,13 +63,13 @@ type MyType = J.TypeOf<typeof MyType>;
 console.log(JSON.stringify(J.print(MyType)));
 ```
 
-There is also an export of a Schemable for use with [hkts](https://deno.land/x/hkts).
-If you use the hkts Schemable `make` function to create a `Schemable` you can use
+There is also an export of a Schemable for use with [fun](https://deno.land/x/fun).
+If you use the functional Schemable `make` function to create a `Schemable` you can use
 that to generate a jsonschema as well.
 
 ```ts
 import * as J from "https://deno.land/x/jsonschema/jsonschema.ts";
-import * as S from "https://deno.land/x/hkts/schemable.ts";
+import * as S from "https://deno.land/x/fun@v1.0.0/schemable/schemable.ts";
 
 /**
  * Declare the type using schemable combinators
@@ -131,7 +131,7 @@ console.log(JSON.stringify(J.print(MyTypeJsonSchema), null, 2));
 ```
 
 As you can see, there is very little difference. The benefit is that
-a `Schemable` can also be used to generate an hkts [decoder](https://deno.land/x/hkts/decoder.ts).
+a `Schemable` can also be used to generate a fun [decoder](https://deno.land/x/fun/schemabledecoder.ts).
 
 Lastly, this library properly handles recursive types/schemas with the `lazy` combinator. Unfortunately,
 the recursive type must be defined as a typescript type since type inference can't name recursive types for you.
@@ -273,4 +273,4 @@ console.log(JSON.stringify(J.print(Foo), null, 2));
 
 ### Modules
 
-`Schemable` is a type from [hkts schemable](https://deno.land/x/hkts/schemable.ts) that abstracts the combinator pattern used in `jsonschema.ts`. Effectively, instead of using jsonschema.ts combinators directly, one can define a `Schemable` instance using the `make` function from `hkts schemable` and then derive the actual json schema from that.
+`Schemable` is a type from [fun schemable](https://deno.land/x/fun/schemable/schemable.ts) that abstracts the combinator pattern used in `jsonschema.ts`. Effectively, instead of using jsonschema.ts combinators directly, one can define a `Schemable` instance using the `make` function from `hkts schemable` and then derive the actual json schema from that.
