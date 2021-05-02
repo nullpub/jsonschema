@@ -1,4 +1,4 @@
-# JsonSchema for Deno
+# JsonSchema for Deno [![Coverage Status](https://coveralls.io/repos/github/nullpub/jsonschema/badge.svg?branch=main)](https://coveralls.io/github/nullpub/jsonschema?branch=main)
 
 A library for constructing JsonSchemas and TypeScript types simultaneously.
 

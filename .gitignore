@@ -1,4 +1,7 @@
 .vscode
+.vim-lsp-settings
+coverage
 draft
 draft.ts
 bundle
+

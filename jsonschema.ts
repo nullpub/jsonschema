@@ -1,19 +1,21 @@
-import type * as TC from "https://deno.land/x/hkts@v0.0.48/type_classes.ts";
-import type * as SC from "https://deno.land/x/hkts@v0.0.48/schemable/schemable.ts";
-import type { State } from "https://deno.land/x/hkts@v0.0.48/state.ts";
-import type {
-  _,
-  NonEmptyRecord,
-} from "https://deno.land/x/hkts@v0.0.48/types.ts";
+import type * as HKT from "https://deno.land/x/fun@v1.0.0/hkt.ts";
+import type * as TC from "https://deno.land/x/fun@v1.0.0/type_classes.ts";
+import type * as SC from "https://deno.land/x/fun@v1.0.0/schemable/schemable.ts";
+import type { State } from "https://deno.land/x/fun@v1.0.0/state.ts";
+import type { NonEmptyRecord } from "https://deno.land/x/fun@v1.0.0/types.ts";
 
-import * as S from "https://deno.land/x/hkts@v0.0.48/state.ts";
-import { constant, pipe } from "https://deno.land/x/hkts@v0.0.48/fns.ts";
+import * as S from "https://deno.land/x/fun@v1.0.0/state.ts";
+import {
+  createSequenceStruct,
+  createSequenceTuple,
+} from "https://deno.land/x/fun@v1.0.0/sequence.ts";
+import { constant, pipe } from "https://deno.land/x/fun@v1.0.0/fns.ts";
 
 import type * as Json from "./types.ts";
 
-/***************************************************************************************************
- * @section Types
- **************************************************************************************************/
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
 
 export type JsonSchema<A> = State<Json.Definitions, Json.Type>;
 
@@ -21,195 +23,176 @@ export type TypeOf<T> = T extends JsonSchema<infer A> ? A : never;
 
 type NonEmptyArray<T> = readonly [T, ...T[]];
 
-/***************************************************************************************************
- * @section Utilities
- **************************************************************************************************/
+/*******************************************************************************
+ * Kind Registration
+ ******************************************************************************/
 
-export const { concat }: TC.Semigroup<Json.Definitions> = {
-  concat: (a, b) => Object.assign({}, a, b),
+export const URI = "JsonSchema";
+
+export type URI = typeof URI;
+
+declare module "https://deno.land/x/fun@v1.0.0/hkt.ts" {
+  // deno-lint-ignore no-explicit-any
+  export interface Kinds<_ extends any[]> {
+    [URI]: JsonSchema<_[0]>;
+  }
+}
+
+/*******************************************************************************
+ * Utilities
+ ******************************************************************************/
+
+const { concat }: TC.Semigroup<Json.Definitions> = {
+  concat: (a) => (b) => Object.assign({}, a, b),
 };
 
-/***************************************************************************************************
- * @section Constructors
- **************************************************************************************************/
+const sequenceStruct = createSequenceStruct(S.Apply);
 
-const createJsonUnknown = (): Json.Unknown => ({});
+const sequenceTuple = createSequenceTuple(S.Apply);
 
-const createJsonString = (props?: Omit<Json.String, "type">): Json.String => ({
-  ...props,
-  type: "string",
-});
+/*******************************************************************************
+ * Constructors
+ ******************************************************************************/
 
-const createJsonNumber = (
-  props: Omit<Json.Number, "type"> = {}
-): Json.Number => ({
-  ...props,
-  type: "number",
-});
+const of = <A = never>(t: Json.Type): JsonSchema<A> => S.of(t);
 
-const createJsonInteger = (
-  props: Omit<Json.Number, "type"> = {}
-): Json.Number => ({
-  ...props,
-  type: "integer",
-});
+/*******************************************************************************
+ * Schemables
+ ******************************************************************************/
 
-const createJsonObject = (props: Omit<Json.Object, "type">): Json.Object => ({
-  ...props,
-  type: "object",
-});
+export const UnknownSchemable: SC.UnknownSchemable<URI> = {
+  unknown: constant(of({})),
+};
 
-const createJsonArray = (props: Omit<Json.Array, "type">): Json.Array => ({
-  ...props,
-  type: "array",
-});
+export const StringSchemable: SC.StringSchemable<URI> = {
+  string: constant(of({ type: "string" })),
+};
 
-const createJsonBoolean = (
-  props: Omit<Json.Boolean, "type"> = {}
-): Json.Boolean => ({ ...props, type: "boolean" });
+export const NumberSchemable: SC.NumberSchemable<URI> = {
+  number: constant(of({ type: "number" })),
+};
 
-const createJsonNull = (props: Omit<Json.Null, "type"> = {}): Json.Null => ({
-  ...props,
-  type: "null",
-});
+export const BooleanSchemable: SC.BooleanSchemable<URI> = {
+  boolean: constant(of({ type: "boolean" })),
+};
 
-const createJsonEnum = (schemas: NonEmptyArray<SC.Literal>): Json.Enum => ({
-  enum: schemas,
-});
+export const LiteralSchemable: SC.LiteralSchemable<URI> = {
+  literal: (...schemas) => of({ enum: schemas }),
+};
 
-const createJsonAllOf = (allOf: NonEmptyArray<Json.Type>): Json.AllOf => ({
-  allOf,
-});
+export const NullableSchemable: SC.NullableSchemable<URI> = {
+  nullable: (or) =>
+    pipe(
+      sequenceTuple(or, of({ type: "null" })),
+      S.map((anyOf) => ({ anyOf })),
+    ),
+};
 
-const createJsonAnyOf = (anyOf: NonEmptyArray<Json.Type>): Json.AnyOf => ({
-  anyOf,
-});
+// TODO expand on this to be more specific
+export const UndefinableSchemable: SC.UndefinableSchemable<URI> = {
+  undefinable: (or) =>
+    pipe(
+      sequenceTuple(or, of({})),
+      S.map((anyOf) => ({ anyOf })),
+    ),
+};
 
-const createJsonOneOf = (oneOf: NonEmptyArray<Json.Type>): Json.OneOf => ({
-  oneOf,
-});
+export const RecordSchemable: SC.RecordSchemable<URI> = {
+  record: (codomain) =>
+    pipe(
+      codomain,
+      S.map((additionalProperties) => ({
+        type: "object",
+        properties: {},
+        additionalProperties,
+      })),
+    ),
+};
 
-const createJsonRef = (id: string): Json.Ref => ({
-  $ref: `#/definitions/${id}`,
-});
+export const ArraySchemable: SC.ArraySchemable<URI> = {
+  array: (item) =>
+    pipe(
+      item,
+      S.map((items) => ({ type: "array", items })),
+    ),
+};
 
-/***************************************************************************************************
- * @section Combinators
- **************************************************************************************************/
+export const TupleSchemable: SC.TupleSchemable<URI> = {
+  tuple: (...components) =>
+    pipe(
+      sequenceTuple(
+        ...(components as unknown as NonEmptyArray<
+          JsonSchema<keyof typeof components>
+        >),
+      ),
+      S.map((items) => ({ type: "array", items })),
+    ),
+};
 
-export const nullable = <A>(or: JsonSchema<A>): JsonSchema<null | A> =>
-  pipe(
-    or,
-    S.map((a) => createJsonAnyOf([createJsonNull(), a]))
-  );
-
-/***************************************************************************************************
- * @section Schemables
- **************************************************************************************************/
-
-export const unknown: JsonSchema<unknown> = S.of(createJsonUnknown());
-
-export const literal = <A extends readonly [SC.Literal, ...SC.Literal[]]>(
-  ...values: A
-): JsonSchema<A[number]> => S.of(createJsonEnum(values));
-
-export const string: JsonSchema<string> = S.of(createJsonString());
-
-export const number: JsonSchema<number> = S.of(createJsonNumber());
-
-export const boolean: JsonSchema<boolean> = S.of(createJsonBoolean());
-
-export const type = <P extends Record<string, JsonSchema<unknown>>>(
-  properties: NonEmptyRecord<P>
-): JsonSchema<{ [K in keyof P]: TypeOf<P[K]> }> =>
-  pipe(
-    S.sequenceStruct(properties as Record<string, JsonSchema<P[keyof P]>>),
-    S.map((properties) =>
-      createJsonObject({
+export const StructSchemable: SC.StructSchemable<URI> = {
+  struct: (props) =>
+    pipe(
+      sequenceStruct(props as Record<string, JsonSchema<unknown>>),
+      S.map((properties) => ({
+        type: "object",
         properties,
-        required: (Object.keys(properties) as unknown) as NonEmptyArray<string>,
-      })
-    )
-  );
-
-export const partial = <P extends Record<string, JsonSchema<unknown>>>(
-  properties: P
-): JsonSchema<Partial<{ [K in keyof P]: TypeOf<P[K]> }>> =>
-  pipe(
-    S.sequenceStruct(properties as Record<string, JsonSchema<P[keyof P]>>),
-    S.map((properties) => createJsonObject({ properties }))
-  );
-
-export const array = <A>(item: JsonSchema<A>): JsonSchema<readonly A[]> =>
-  pipe(
-    item,
-    S.map((items) => createJsonArray({ items }))
-  );
-
-export const record = <A>(
-  schema: JsonSchema<A>
-): JsonSchema<Record<string, A>> =>
-  pipe(
-    schema,
-    S.map((aps) =>
-      createJsonObject({ properties: {}, additionalProperties: aps })
-    )
-  );
-
-export const tuple = <A extends NonEmptyArray<unknown>>(
-  ...components: { [K in keyof A]: JsonSchema<A[K]> }
-): JsonSchema<A> =>
-  pipe(
-    S.sequenceTuple(...(components as NonEmptyArray<JsonSchema<keyof A>>)),
-    S.map((items) => createJsonArray({ items }))
-  );
-
-export const union = <MS extends NonEmptyArray<JsonSchema<unknown>>>(
-  ...members: MS
-): JsonSchema<TypeOf<MS[keyof MS]>> =>
-  pipe(
-    S.sequenceTuple(...(members as NonEmptyArray<JsonSchema<MS[keyof MS]>>)),
-    S.map((items) => createJsonAnyOf(items))
-  );
-
-export const intersect = <A, B>(
-  left: JsonSchema<A>,
-  right: JsonSchema<B>
-): JsonSchema<A & B> =>
-  pipe(
-    S.sequenceTuple(left, right),
-    S.map((items) => createJsonAllOf(items))
-  );
-
-export const sum = <T extends string, A>(
-  tag: T,
-  members: { [K in keyof A]: JsonSchema<A[K] & { [K in T]: string }> }
-): JsonSchema<A[keyof A]> =>
-  pipe(
-    S.sequenceStruct(members as Record<string, JsonSchema<A[keyof A]>>),
-    S.map((r) =>
-      createJsonOneOf((Object.values(r) as unknown) as NonEmptyArray<Json.Type>)
-    )
-  );
-
-export const lazy = <A>(id: string, f: () => JsonSchema<A>): JsonSchema<A> => {
-  let returnRef = false;
-  const ref = createJsonRef(id);
-
-  return (s) => {
-    if (returnRef) {
-      return [ref, s];
-    }
-    returnRef = true;
-    const [schema, defs] = f()(s);
-    const definitions = [{ [id]: schema }, defs, s].reduce(concat);
-    return [ref, definitions];
-  };
+        required: Object.keys(properties).sort() as unknown as NonEmptyArray<
+          string
+        >,
+      })),
+    ),
 };
 
-/***************************************************************************************************
- * @section Utilities
- **************************************************************************************************/
+export const PartialSchemable: SC.PartialSchemable<URI> = {
+  partial: (props) =>
+    pipe(
+      sequenceStruct(props as Record<string, JsonSchema<unknown>>),
+      S.map((properties) => ({
+        type: "object",
+        properties,
+      })),
+    ),
+};
+
+export const IntersectionSchemable: SC.IntersectSchemable<URI> = {
+  intersect: (and) =>
+    (ta) =>
+      pipe(
+        sequenceTuple(and, ta),
+        S.map((allOf) => ({ allOf })),
+      ),
+};
+
+export const UnionSchemable: SC.UnionSchemable<URI> = {
+  union: (or) =>
+    (ta) =>
+      pipe(
+        sequenceTuple(or, ta),
+        S.map((anyOf) => ({ anyOf })),
+      ),
+};
+
+export const LazySchemable: SC.LazySchemable<URI> = {
+  lazy: (id, f) => {
+    let returnRef = false;
+    const ref: Json.Ref = { $ref: `#/definitions/${id}` };
+
+    return (s) => {
+      if (returnRef) {
+        return [ref, s];
+      }
+      returnRef = true;
+      const [schema, defs] = f()(s);
+      let definitions = concat({ [id]: schema })(defs);
+      definitions = concat(definitions)(s);
+      return [ref, definitions];
+    };
+  },
+};
+
+/*******************************************************************************
+ * Utilities
+ ******************************************************************************/
 
 export const print = <A>(jsonschema: JsonSchema<A>): Json.Type => {
   const [schema, definitions] = jsonschema({});
@@ -219,23 +202,54 @@ export const print = <A>(jsonschema: JsonSchema<A>): Json.Type => {
   };
 };
 
-/***************************************************************************************************
- * @section Modules
- **************************************************************************************************/
+/*******************************************************************************
+ * Modules
+ ******************************************************************************/
 
-export const Schemable: SC.Schemable<JsonSchema<_>> = {
-  unknown: constant(unknown),
-  literal,
-  string: constant(string),
-  number: constant(number),
-  boolean: constant(boolean),
-  nullable: nullable,
-  type,
-  partial,
-  record,
-  array,
-  tuple: tuple as SC.TupleSchemable<JsonSchema<_>, 1>,
-  intersect,
-  sum,
-  lazy,
+export const Schemable: SC.Schemable<URI> = {
+  ...UnknownSchemable,
+  ...StringSchemable,
+  ...NumberSchemable,
+  ...BooleanSchemable,
+  ...LiteralSchemable,
+  ...NullableSchemable,
+  ...UndefinableSchemable,
+  ...RecordSchemable,
+  ...ArraySchemable,
+  ...TupleSchemable,
+  ...StructSchemable,
+  ...PartialSchemable,
+  ...IntersectionSchemable,
+  ...UnionSchemable,
+  ...LazySchemable,
 };
+
+export const unknown = Schemable.unknown();
+
+export const string = Schemable.string();
+
+export const number = Schemable.number();
+
+export const boolean = Schemable.boolean();
+
+export const literal = Schemable.literal;
+
+export const nullable = Schemable.nullable;
+
+export const undefinable = Schemable.undefinable;
+
+export const record = Schemable.record;
+
+export const array = Schemable.array;
+
+export const tuple = Schemable.tuple;
+
+export const struct = Schemable.struct;
+
+export const partial = Schemable.partial;
+
+export const intersect = Schemable.intersect;
+
+export const union = Schemable.union;
+
+export const lazy = Schemable.lazy;

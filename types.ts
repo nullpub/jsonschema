@@ -1,4 +1,4 @@
-import type { Literal } from "https://deno.land/x/hkts@v0.0.48/schemable/schemable.ts";
+import type { Literal } from "https://deno.land/x/fun@v1.0.0/schemable/schemable.ts";
 
 /***************************************************************************************************
  * @section  Types

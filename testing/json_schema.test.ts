@@ -9,11 +9,28 @@ Deno.test({
     const expected = {
       anyOf: [
         {
+          type: "string",
+        },
+        {
           type: "null",
         },
+      ],
+      definitions: {},
+    };
+    assertEquals(actual, expected);
+  },
+});
+
+Deno.test({
+  name: "JsonSchema undefinable",
+  fn() {
+    const actual = J.print(J.undefinable(J.string));
+    const expected = {
+      anyOf: [
         {
           type: "string",
         },
+        {},
       ],
       definitions: {},
     };
@@ -70,10 +87,10 @@ Deno.test({
 });
 
 Deno.test({
-  name: "JsonSchema type",
+  name: "JsonSchema struct",
   fn() {
     const actual = J.print(
-      J.type({
+      J.struct({
         foo: J.string,
       }),
     );
@@ -167,7 +184,7 @@ Deno.test({
   name: "JsonSchema union",
   fn() {
     const actual = J.print(
-      J.union(J.type({ foo: J.string }), J.type({ bar: J.number })),
+      J.union(J.struct({ foo: J.string }))(J.struct({ bar: J.number })),
     );
     const expected = {
       anyOf: [
@@ -200,7 +217,7 @@ Deno.test({
   name: "JsonSchema intersect",
   fn() {
     const actual = J.print(
-      J.intersect(J.type({ foo: J.string }), J.type({ bar: J.number })),
+      J.intersect(J.struct({ foo: J.string }))(J.struct({ bar: J.number })),
     );
     const expected = {
       allOf: [
@@ -230,45 +247,6 @@ Deno.test({
 });
 
 Deno.test({
-  name: "JsonSchema sum",
-  fn() {
-    const actual = J.print(
-      J.sum("tag", {
-        Some: J.type({ tag: J.literal("Some"), value: J.string }),
-        None: J.type({ tag: J.literal("None") }),
-      }),
-    );
-    const expected = {
-      definitions: {},
-      oneOf: [
-        {
-          properties: {
-            tag: {
-              enum: ["Some"],
-            },
-            value: {
-              type: "string",
-            },
-          },
-          required: ["tag", "value"],
-          type: "object",
-        },
-        {
-          properties: {
-            tag: {
-              enum: ["None"],
-            },
-          },
-          required: ["tag"],
-          type: "object",
-        },
-      ],
-    };
-    assertEquals(actual, expected);
-  },
-});
-
-Deno.test({
   name: "JsonSchema lazy recursion",
   fn() {
     type Person = {
@@ -279,7 +257,7 @@ Deno.test({
     };
 
     const Person: J.JsonSchema<Person> = J.lazy("Person", () =>
-      J.type({
+      J.struct({
         name: J.string,
         age: J.number,
         isAlive: J.boolean,
@@ -296,7 +274,7 @@ Deno.test({
             isAlive: { type: "boolean" },
             friends: { items: { $ref: "#/definitions/Person" }, type: "array" },
           },
-          required: ["name", "age", "isAlive", "friends"],
+          required: ["name", "age", "isAlive", "friends"].sort(),
           type: "object",
         },
       },
