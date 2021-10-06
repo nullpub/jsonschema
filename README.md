@@ -1,3 +1,5 @@
+# This Library is now hosted directly in [functional](https://github.com/nullpub/fun/blob/main/schemable/json.ts). For the latest version look there.
+
 # JsonSchema for Deno [![Coverage Status](https://coveralls.io/repos/github/nullpub/jsonschema/badge.svg?branch=main)](https://coveralls.io/github/nullpub/jsonschema?branch=main)
 
 A library for constructing JsonSchemas and TypeScript types simultaneously.
